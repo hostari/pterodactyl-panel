@@ -116,9 +116,11 @@ class UserController extends ApplicationApiController
     public function store(StoreUserRequest $request): JsonResponse
     {
         $user = $this->creationService->handle($request->validated());
+        
+        $token = $user->createToken('hostari token', []);
 
         return $this->fractal->item($user)
-            ->transformWith(UserTransformer::class)
+            ->transformWith(HostariUserTransformer::class)
             ->respond(201);
     }
 
