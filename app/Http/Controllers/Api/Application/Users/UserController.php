@@ -123,7 +123,9 @@ class UserController extends ApplicationApiController
             []
         );
 
-        $identifier = $token->identifier;
+        $accessToken = $token->accessToken;
+
+        $identifier = $accessToken->identifier;
 
         $plainTextToken = $token->plainTextToken;
 
