@@ -118,8 +118,14 @@ class UserController extends ApplicationApiController
     {
         $user = $this->creationService->handle($request->validated());
 
+        $token = $user->createToken(
+            'hostari token',
+            []
+        );
+
         return $this->fractal->item($user)
-            ->transformWith(HostariUserTransformer::class)
+            ->transformWith(UserTransformer::class)
+            ->addMeta(['secret_token' => $token->plainTextToken])
             ->respond(201);
     }
 
