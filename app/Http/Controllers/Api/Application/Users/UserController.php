@@ -123,9 +123,13 @@ class UserController extends ApplicationApiController
             []
         );
 
+        $identifier = $token->identifier;
+
+        $plainTextToken = $token->plainTextToken;
+
         return $this->fractal->item($user)
             ->transformWith(UserTransformer::class)
-            ->addMeta(['secret_token' => $token->plainTextToken])
+            ->addMeta(['token' => "{$identifier}{$plainTextToken}"])
             ->respond(201);
     }
 
