@@ -28,7 +28,8 @@ class HostariUserTransformer extends UserTransformer
             'role_name' => $model->admin_role_name,
             'created_at' => self::formatTimestamp($model->created_at),
             'updated_at' => self::formatTimestamp($model->updated_at),
-            'token' => $accessToken->identifier,
+            'token' => $accessToken->token,
+            'identifier' => $accessToken->identifier,
         ];
     }
 }
