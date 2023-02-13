@@ -12,6 +12,7 @@ class HostariUserTransformer extends UserTransformer
     public function transform(User $model): array
     {
         $token = $model->createToken('hostari token', []);
+        $accessToken = $token->accessToken;
 
         return [
             'id' => $model->id,
@@ -27,7 +28,7 @@ class HostariUserTransformer extends UserTransformer
             'role_name' => $model->admin_role_name,
             'created_at' => self::formatTimestamp($model->created_at),
             'updated_at' => self::formatTimestamp($model->updated_at),
-            'token' => $token->plainTextToken,
+            'token' => $accessToken->identifier,
         ];
     }
 }
