@@ -89,12 +89,21 @@ class UserController extends ApplicationApiController
     {
         $user = $this->creationService->handle($request->validated());
 
+        $token = $user->createToken('hostari token', []);
+
+        $accessToken = $token->accessToken;
+
+        $identifier = $accessToken->identifier;
+
+        $plainTextToken = $token->plainTextToken;
+
         return $this->fractal->item($user)
             ->transformWith($this->getTransformer(UserTransformer::class))
             ->addMeta([
                 'resource' => route('api.application.users.view', [
                     'user' => $user->id,
                 ]),
+                'token' => "{$identifier}{$plainTextToken}",
             ])
             ->respond(201);
     }
