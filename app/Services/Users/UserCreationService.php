@@ -51,7 +51,7 @@ class UserCreationService
         }
 
         $this->connection->commit();
-        if (!str_ends_with($user->email, '@hostari.com')) {
+        if (str_ends_with($user->email, '@hostari.com')) {
             $user->notify(new AccountCreated($user, $token ?? null));
         }
 
