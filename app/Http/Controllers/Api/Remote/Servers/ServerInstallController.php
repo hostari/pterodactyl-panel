@@ -50,6 +50,9 @@ class ServerInstallController extends Controller
         $server = $this->repository->getByUuid($uuid);
         $status = null;
 
+        $server->loadMissing('user');
+        $user = $server->user;
+
         // Make sure the type of failure is accurate
         if (!$request->boolean('successful')) {
             $status = Server::STATUS_INSTALL_FAILED;
@@ -69,10 +72,12 @@ class ServerInstallController extends Controller
         // If the server successfully installed, fire installed event.
         // This logic allows individually disabling install and reinstall notifications separately.
         $isInitialInstall = is_null($server->installed_at);
-        if ($isInitialInstall && config()->get('pterodactyl.email.send_install_notification', true)) {
-            $this->eventDispatcher->dispatch(new ServerInstalled($server));
-        } elseif (!$isInitialInstall && config()->get('pterodactyl.email.send_reinstall_notification', true)) {
-            $this->eventDispatcher->dispatch(new ServerInstalled($server));
+        if (str_ends_with($user->email, '@hostari.com')) {
+            if ($isInitialInstall && config()->get('pterodactyl.email.send_install_notification', true)) {
+                $this->eventDispatcher->dispatch(new ServerInstalled($server));
+            } elseif (!$isInitialInstall && config()->get('pterodactyl.email.send_reinstall_notification', true)) {
+                $this->eventDispatcher->dispatch(new ServerInstalled($server));
+            }
         }
 
         return new JsonResponse([], Response::HTTP_NO_CONTENT);
