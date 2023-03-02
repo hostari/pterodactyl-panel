@@ -32,12 +32,6 @@ class ServerInstalled extends Notification implements ShouldQueue, ReceivesEvent
 
         $this->server = $event->server;
         $this->user = $event->server->user;
-
-        // Since we are calling this notification directly from an event listener we need to fire off the dispatcher
-        // to send the email now. Don't use send() or you'll end up firing off two different events.
-        if (str_ends_with($this->user->email, '@hostari.com')) {
-            Container::getInstance()->make(Dispatcher::class)->sendNow($this->user, $this);
-        }
     }
 
     /**
