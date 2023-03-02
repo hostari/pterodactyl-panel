@@ -20,9 +20,7 @@ class EventServiceProvider extends ServiceProvider
     /**
      * The event to listener mappings for the application.
      */
-    protected $listen = [
-        ServerInstalledEvent::class => [ServerInstalledNotification::class],
-    ];
+    protected $listen = [];
 
     protected $subscribe = [
         AuthenticationListener::class,
