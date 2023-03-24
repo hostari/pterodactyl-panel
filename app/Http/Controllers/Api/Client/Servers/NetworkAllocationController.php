@@ -13,10 +13,10 @@ use Pterodactyl\Http\Controllers\Api\Client\ClientApiController;
 use Pterodactyl\Services\Allocations\FindAssignableAllocationService;
 use Pterodactyl\Http\Requests\Api\Client\Servers\Network\GetNetworkRequest;
 use Pterodactyl\Http\Requests\Api\Client\Servers\Network\NewAllocationRequest;
+use Pterodactyl\Http\Requests\Api\Client\Servers\Network\AssignAllocationRequest;
 use Pterodactyl\Http\Requests\Api\Client\Servers\Network\DeleteAllocationRequest;
 use Pterodactyl\Http\Requests\Api\Client\Servers\Network\UpdateAllocationRequest;
 use Pterodactyl\Http\Requests\Api\Client\Servers\Network\SetPrimaryAllocationRequest;
-use Pterodactyl\Http\Requests\Api\Client\Servers\Network\AssignAllocationRequest;
 
 class NetworkAllocationController extends ClientApiController
 {
