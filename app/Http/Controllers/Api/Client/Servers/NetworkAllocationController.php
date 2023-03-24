@@ -85,6 +85,26 @@ class NetworkAllocationController extends ClientApiController
     }
 
     /**
+     * Assigns an additional allocation for a server
+     *
+     * @throws \Pterodactyl\Exceptions\Model\DataValidationException
+     * @throws \Pterodactyl\Exceptions\Repository\RecordNotFoundException
+     */
+    public function assign(AssignAllocationRequest $request, Server $server, Allocation $allocation): array
+    {
+        $this->serverRepository->update($server->id, ['allocation_id' => $allocation->id]);
+
+        Activity::event('server:allocation.create')
+            ->subject($allocation)
+            ->property('allocation', $allocation->toString())
+            ->log();
+
+        return $this->fractal->item($allocation)
+            ->transformWith($this->getTransformer(AllocationTransformer::class))
+            ->toArray();
+    }
+
+    /**
      * Set the notes for the allocation for a server.
      *s.
      *
