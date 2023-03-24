@@ -16,6 +16,7 @@ use Pterodactyl\Http\Requests\Api\Client\Servers\Network\NewAllocationRequest;
 use Pterodactyl\Http\Requests\Api\Client\Servers\Network\DeleteAllocationRequest;
 use Pterodactyl\Http\Requests\Api\Client\Servers\Network\UpdateAllocationRequest;
 use Pterodactyl\Http\Requests\Api\Client\Servers\Network\SetPrimaryAllocationRequest;
+use Pterodactyl\Http\Requests\Api\Client\Servers\Network\AssignAllocationRequest;
 
 class NetworkAllocationController extends ClientApiController
 {
@@ -90,9 +91,14 @@ class NetworkAllocationController extends ClientApiController
      * @throws \Pterodactyl\Exceptions\Model\DataValidationException
      * @throws \Pterodactyl\Exceptions\Repository\RecordNotFoundException
      */
-    public function assign(AssignAllocationRequest $request, Server $server, Allocation $allocation): array
+    public function assign(AssignAllocationRequest $request, Server $server): array
     {
-        $this->serverRepository->update($server->id, ['allocation_id' => $allocation->id]);
+        $alloc = Allocation::query()
+            ->where('id', $request->input('allocation_id'))
+            ->first();
+
+        $alloc->update(['server_id' => $server->id]);
+        $allocation = $alloc->refresh();
 
         Activity::event('server:allocation.create')
             ->subject($allocation)
