@@ -86,13 +86,17 @@ class NetworkAllocationController extends ClientApiController
     }
 
     /**
-     * Assigns an additional allocation for a server
+     * Assigns an additional allocation for a server.
      *
      * @throws \Pterodactyl\Exceptions\Model\DataValidationException
      * @throws \Pterodactyl\Exceptions\Repository\RecordNotFoundException
      */
     public function assign(AssignAllocationRequest $request, Server $server): array
     {
+        if ($server->allocations()->count() >= $server->allocation_limit) {
+            throw new DisplayException('Cannot assign additional allocations to this server: limit has been reached.');
+        }
+
         $alloc = Allocation::query()
             ->where('id', $request->input('allocation_id'))
             ->first();
