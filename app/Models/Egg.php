@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $id
  * @property string $uuid
  * @property int $nest_id
+ * @property string|null $sync_key
+ * @property string|null $sync_hash
  * @property string $author
  * @property string $name
  * @property string|null $description
@@ -115,11 +117,13 @@ class Egg extends Model
 
     public static array $validationRules = [
         'nest_id' => 'required|bail|numeric|exists:nests,id',
+        'sync_key' => 'nullable|string|max:128',
+        'sync_hash' => 'nullable|string|size:64',
         'uuid' => 'required|string|size:36',
         'name' => 'required|string|max:191',
         'description' => 'string|nullable',
         'features' => 'array|nullable',
-        'author' => 'required|string|email',
+        'author' => 'required|string|email|max:191',
         'file_denylist' => 'array|nullable',
         'file_denylist.*' => 'string',
         'docker_images' => 'required|array|min:1',

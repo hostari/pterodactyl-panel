@@ -119,6 +119,8 @@ Route::group(['prefix' => '/nests'], function () {
     // Egg Management Endpoint
     Route::group(['prefix' => '/{nest:id}/eggs'], function () {
         Route::get('/', [Application\Nests\EggController::class, 'index'])->name('api.application.nests.eggs');
+        Route::post('/', [Application\Nests\EggController::class, 'store'])->name('api.application.nests.eggs.store');
         Route::get('/{egg:id}', [Application\Nests\EggController::class, 'view'])->name('api.application.nests.eggs.view');
+        Route::put('/{egg:id}', [Application\Nests\EggController::class, 'update'])->name('api.application.nests.eggs.update');
     });
 });

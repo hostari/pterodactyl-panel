@@ -67,7 +67,7 @@ class EggVariable extends Model
         'default_value' => 'string',
         'user_viewable' => 'boolean',
         'user_editable' => 'boolean',
-        'rules' => 'required|string',
+        'rules' => 'required|string|max:191',
     ];
 
     protected $attributes = [

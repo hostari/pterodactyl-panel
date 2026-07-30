@@ -14,8 +14,8 @@ class EggScriptFormRequest extends AdminFormRequest
         return [
             'script_install' => 'sometimes|nullable|string',
             'script_is_privileged' => 'sometimes|required|boolean',
-            'script_entry' => 'sometimes|required|string',
-            'script_container' => 'sometimes|required|string',
+            'script_entry' => 'sometimes|required|string|max:191',
+            'script_container' => 'sometimes|required|string|max:191',
             'copy_script_from' => 'sometimes|nullable|numeric',
         ];
     }
