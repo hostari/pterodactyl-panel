@@ -17,7 +17,7 @@ jobs:
   push:
     name: Push
     runs-on: ubuntu-22.04
-    if: "!contains(github.ref, 'develop') || (!contains(github.event.head_commit.message, 'skip docker') && !contains(github.event.head_commit.message, 'docker skip'))"
+    if: "github.event_name != 'pull_request' && (!contains(github.ref, 'develop') || (!contains(github.event.head_commit.message, 'skip docker') && !contains(github.event.head_commit.message, 'docker skip')))"
     steps:
       - name: Code checkout
         uses: actions/checkout@v3

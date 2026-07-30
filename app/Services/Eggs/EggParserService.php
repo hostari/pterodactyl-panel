@@ -8,8 +8,8 @@ use Illuminate\Validation\Rule;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Pterodactyl\Models\EggVariable;
-use Illuminate\Contracts\Validation\Factory as ValidationFactory;
 use Pterodactyl\Exceptions\Service\InvalidFileUploadException;
+use Illuminate\Contracts\Validation\Factory as ValidationFactory;
 
 class EggParserService
 {
@@ -120,10 +120,7 @@ class EggParserService
         ]);
 
         if ($validator->fails()) {
-            throw new InvalidFileUploadException(sprintf(
-                'The egg document is invalid: %s',
-                $validator->errors()->first()
-            ));
+            throw new InvalidFileUploadException(sprintf('The egg document is invalid: %s', $validator->errors()->first()));
         }
 
         return $parsed;

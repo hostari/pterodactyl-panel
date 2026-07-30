@@ -2,8 +2,8 @@
 
 namespace Pterodactyl\Services\Eggs\Sharing;
 
-use Pterodactyl\Models\Egg;
 use Illuminate\Support\Arr;
+use Pterodactyl\Models\Egg;
 use Illuminate\Http\UploadedFile;
 use Pterodactyl\Models\EggVariable;
 use Illuminate\Database\ConnectionInterface;

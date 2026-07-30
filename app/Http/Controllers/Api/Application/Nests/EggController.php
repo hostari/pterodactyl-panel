@@ -2,18 +2,18 @@
 
 namespace Pterodactyl\Http\Controllers\Api\Application\Nests;
 
-use Illuminate\Http\Response;
 use Pterodactyl\Models\Egg;
 use Pterodactyl\Models\Nest;
+use Illuminate\Http\Response;
 use Illuminate\Http\JsonResponse;
-use Pterodactyl\Exceptions\Service\InvalidFileUploadException;
 use Pterodactyl\Services\Eggs\Sharing\EggImporterService;
 use Pterodactyl\Transformers\Api\Application\EggTransformer;
+use Pterodactyl\Exceptions\Service\InvalidFileUploadException;
 use Pterodactyl\Services\Eggs\Sharing\EggUpdateImporterService;
 use Pterodactyl\Http\Requests\Api\Application\Nests\Eggs\GetEggRequest;
 use Pterodactyl\Http\Requests\Api\Application\Nests\Eggs\GetEggsRequest;
-use Pterodactyl\Http\Requests\Api\Application\Nests\Eggs\ImportEggRequest;
 use Pterodactyl\Http\Controllers\Api\Application\ApplicationApiController;
+use Pterodactyl\Http\Requests\Api\Application\Nests\Eggs\ImportEggRequest;
 
 class EggController extends ApplicationApiController
 {
