@@ -2,11 +2,11 @@
 
 namespace Pterodactyl\Tests\Integration\Api\Client\Server;
 
+use Pterodactyl\Models\Node;
 use Pterodactyl\Models\User;
 use Illuminate\Http\Response;
 use Pterodactyl\Models\Allocation;
 use Pterodactyl\Models\Permission;
-use Pterodactyl\Models\Node;
 use Pterodactyl\Tests\Integration\Api\Client\ClientApiIntegrationTestCase;
 
 class NetworkAllocationControllerTest extends ClientApiIntegrationTestCase

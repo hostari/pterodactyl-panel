@@ -3,11 +3,11 @@
 namespace Pterodactyl\Tests\Integration\Api\Application\Users;
 
 use Pterodactyl\Models\User;
-use Pterodactyl\Models\ApiKey;
 use Illuminate\Http\Response;
+use Pterodactyl\Models\ApiKey;
+use Pterodactyl\Services\Acl\Api\AdminAcl;
 use Illuminate\Support\Facades\Notification;
 use Pterodactyl\Notifications\AccountCreated;
-use Pterodactyl\Services\Acl\Api\AdminAcl;
 use Pterodactyl\Transformers\Api\Application\UserTransformer;
 use Pterodactyl\Transformers\Api\Application\ServerTransformer;
 use Pterodactyl\Tests\Integration\Api\Application\ApplicationApiIntegrationTestCase;

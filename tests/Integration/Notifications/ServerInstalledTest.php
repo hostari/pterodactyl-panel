@@ -3,11 +3,11 @@
 namespace Pterodactyl\Tests\Integration\Notifications;
 
 use Pterodactyl\Models\User;
-use Illuminate\Support\Facades\Notification;
 use Pterodactyl\Events\Server\Installed;
-use Pterodactyl\Notifications\ServerInstalled as ServerInstalledNotification;
+use Illuminate\Support\Facades\Notification;
 use Pterodactyl\Tests\Integration\IntegrationTestCase;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Pterodactyl\Notifications\ServerInstalled as ServerInstalledNotification;
 
 class ServerInstalledTest extends IntegrationTestCase
 {

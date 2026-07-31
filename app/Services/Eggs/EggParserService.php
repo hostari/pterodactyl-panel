@@ -51,7 +51,7 @@ class EggParserService
     /**
      * Validates and normalizes a decoded egg document.
      *
-     * @throws \Pterodactyl\Exceptions\Service\InvalidFileUploadException
+     * @throws InvalidFileUploadException
      */
     public function parse(array $parsed): array
     {
