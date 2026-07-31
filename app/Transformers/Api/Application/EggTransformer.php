@@ -46,6 +46,20 @@ class EggTransformer extends BaseTransformer
             $files = new \stdClass();
         }
 
+        $dockerImages = $model->docker_images;
+        if (array_values($dockerImages) === $dockerImages) {
+            // Older panel data may contain the pre-v2 list shape. Keep reads
+            // compatible while always exposing the map expected by API SDKs.
+            $dockerImages = array_combine($dockerImages, $dockerImages) ?: [];
+        }
+
+        $startup = trim((string) $model->startup);
+        if ($startup === '') {
+            // Legacy/admin-created eggs may still have a nullable startup command.
+            // A shell no-op preserves those records without emitting nullable API data.
+            $startup = ':';
+        }
+
         return [
             'id' => $model->id,
             'uuid' => $model->uuid,
@@ -56,8 +70,8 @@ class EggTransformer extends BaseTransformer
             // "docker_image" is deprecated, but left here to avoid breaking too many things at once
             // in external software. We'll remove it down the road once things have gotten the chance
             // to upgrade to using "docker_images".
-            'docker_image' => count($model->docker_images) > 0 ? Arr::first($model->docker_images) : '',
-            'docker_images' => $model->docker_images,
+            'docker_image' => count($dockerImages) > 0 ? Arr::first($dockerImages) : '',
+            'docker_images' => empty($dockerImages) ? new \stdClass() : $dockerImages,
             'config' => [
                 'files' => $files,
                 'startup' => json_decode($model->config_startup, true),
@@ -66,7 +80,7 @@ class EggTransformer extends BaseTransformer
                 'file_denylist' => $model->file_denylist,
                 'extends' => $model->config_from,
             ],
-            'startup' => $model->startup,
+            'startup' => $startup,
             'script' => [
                 'privileged' => $model->script_is_privileged,
                 'install' => $model->script_install,
