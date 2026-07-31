@@ -5,7 +5,9 @@ namespace Pterodactyl\Models;
 use Illuminate\Support\Str;
 use Webmozart\Assert\Assert;
 use Pterodactyl\Services\Acl\Api\AdminAcl;
+use Laravel\Sanctum\Contracts\HasAbilities;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 /**
  * Pterodactyl\Models\ApiKey.
@@ -18,6 +20,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property array|null $allowed_ips
  * @property string|null $memo
  * @property \Illuminate\Support\Carbon|null $last_used_at
+ * @property \Illuminate\Support\Carbon|null $expires_at
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property int $r_servers
@@ -29,8 +32,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $r_eggs
  * @property int $r_database_hosts
  * @property int $r_server_databases
- * @property \Pterodactyl\Models\User $tokenable
- * @property \Pterodactyl\Models\User $user
+ * @property User $tokenable
+ * @property User $user
  *
  * @method static \Database\Factories\ApiKeyFactory factory(...$parameters)
  * @method static \Illuminate\Database\Eloquent\Builder|ApiKey newModelQuery()
@@ -58,8 +61,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  *
  * @mixin \Eloquent
  */
-class ApiKey extends Model
+class ApiKey extends Model implements HasAbilities
 {
+    /** @use HasFactory<\Database\Factories\ApiKeyFactory> */
+    use HasFactory;
+
     /**
      * The resource name for this model when it is transformed into an
      * API representation using fractal.
@@ -97,6 +103,10 @@ class ApiKey extends Model
     protected $casts = [
         'allowed_ips' => 'array',
         'user_id' => 'int',
+        'last_used_at' => 'datetime',
+        'expires_at' => 'datetime',
+        self::CREATED_AT => 'datetime',
+        self::UPDATED_AT => 'datetime',
         'r_' . AdminAcl::RESOURCE_USERS => 'int',
         'r_' . AdminAcl::RESOURCE_ALLOCATIONS => 'int',
         'r_' . AdminAcl::RESOURCE_DATABASE_HOSTS => 'int',
@@ -117,6 +127,7 @@ class ApiKey extends Model
         'allowed_ips',
         'memo',
         'last_used_at',
+        'expires_at',
     ];
 
     /**
@@ -137,6 +148,7 @@ class ApiKey extends Model
         'allowed_ips' => 'nullable|array',
         'allowed_ips.*' => 'string',
         'last_used_at' => 'nullable|date',
+        'expires_at' => 'nullable|date',
         'r_' . AdminAcl::RESOURCE_USERS => 'integer|min:0|max:3',
         'r_' . AdminAcl::RESOURCE_ALLOCATIONS => 'integer|min:0|max:3',
         'r_' . AdminAcl::RESOURCE_DATABASE_HOSTS => 'integer|min:0|max:3',
@@ -148,14 +160,22 @@ class ApiKey extends Model
         'r_' . AdminAcl::RESOURCE_SERVERS => 'integer|min:0|max:3',
     ];
 
-    protected $dates = [
-        self::CREATED_AT,
-        self::UPDATED_AT,
-        'last_used_at',
-    ];
+    public function can($ability)
+    {
+        // todo: this was never initially implemented and only became obvious once
+        //  internal tooling was updated and started catching this mistake.
+        return false;
+    }
+
+    public function cant($ability)
+    {
+        return ! $this->can($ability);
+    }
 
     /**
      * Returns the user this token is assigned to.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<\Pterodactyl\Models\User, $this>
      */
     public function user(): BelongsTo
     {
@@ -164,6 +184,8 @@ class ApiKey extends Model
 
     /**
      * Required for support with Laravel Sanctum.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<\Pterodactyl\Models\User, $this>
      *
      * @see \Laravel\Sanctum\Guard::supportsTokens()
      */

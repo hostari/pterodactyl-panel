@@ -25,7 +25,7 @@ class NetworkAllocationController extends ClientApiController
      */
     public function __construct(
         private FindAssignableAllocationService $assignableAllocationService,
-        private ServerRepository $serverRepository
+        private ServerRepository $serverRepository,
     ) {
         parent::__construct();
     }
@@ -93,21 +93,35 @@ class NetworkAllocationController extends ClientApiController
      */
     public function assign(AssignAllocationRequest $request, Server $server): array
     {
-        if ($server->allocations()->count() >= $server->allocation_limit) {
-            throw new DisplayException('Cannot assign additional allocations to this server: limit has been reached.');
-        }
+        $allocation = Activity::event('server:allocation.create')->transaction(function ($log) use ($request, $server) {
+            // Serialize allocation additions for this server. Locking only the currently
+            // assigned allocations does not protect an empty range from concurrent inserts.
+            $server = Server::query()->lockForUpdate()->findOrFail($server->id);
 
-        $alloc = Allocation::query()
-            ->where('id', $request->input('allocation_id'))
-            ->first();
+            if (empty($server->allocation_limit) || $server->allocations()->count() >= $server->allocation_limit) {
+                throw new DisplayException('Cannot assign additional allocations to this server: limit has been reached.');
+            }
 
-        $alloc->update(['server_id' => $server->id]);
-        $allocation = $alloc->refresh();
+            // Lock the requested allocation and require it to be free and on this server's
+            // node. These constraints prevent both cross-node assignment and allocation theft.
+            $allocation = Allocation::query()
+                ->whereKey($request->integer('allocation_id'))
+                ->where('node_id', $server->node_id)
+                ->whereNull('server_id')
+                ->lockForUpdate()
+                ->first();
 
-        Activity::event('server:allocation.create')
-            ->subject($allocation)
-            ->property('allocation', $allocation->toString())
-            ->log();
+            if (!$allocation) {
+                throw new DisplayException('The requested allocation is unavailable for this server.');
+            }
+
+            $allocation->server_id = $server->id;
+            $allocation->save();
+
+            $log->subject($allocation)->property('allocation', $allocation->toString());
+
+            return $allocation;
+        });
 
         return $this->fractal->item($allocation)
             ->transformWith($this->getTransformer(AllocationTransformer::class))
@@ -118,20 +132,21 @@ class NetworkAllocationController extends ClientApiController
      * Set the notes for the allocation for a server.
      *s.
      *
-     * @throws \Pterodactyl\Exceptions\DisplayException
+     * @throws DisplayException
      */
     public function store(NewAllocationRequest $request, Server $server): array
     {
-        if ($server->allocations()->count() >= $server->allocation_limit) {
-            throw new DisplayException('Cannot assign additional allocations to this server: limit has been reached.');
-        }
+        $allocation = Activity::event('server:allocation.create')->transaction(function ($log) use ($server) {
+            if ($server->allocations()->lockForUpdate()->count() >= $server->allocation_limit) {
+                throw new DisplayException('Cannot assign additional allocations to this server: limit has been reached.');
+            }
 
-        $allocation = $this->assignableAllocationService->handle($server);
+            $allocation = $this->assignableAllocationService->handle($server);
 
-        Activity::event('server:allocation.create')
-            ->subject($allocation)
-            ->property('allocation', $allocation->toString())
-            ->log();
+            $log->subject($allocation)->property('allocation', $allocation->toString());
+
+            return $allocation;
+        });
 
         return $this->fractal->item($allocation)
             ->transformWith($this->getTransformer(AllocationTransformer::class))
@@ -141,7 +156,7 @@ class NetworkAllocationController extends ClientApiController
     /**
      * Delete an allocation from a server.
      *
-     * @throws \Pterodactyl\Exceptions\DisplayException
+     * @throws DisplayException
      */
     public function delete(DeleteAllocationRequest $request, Server $server, Allocation $allocation): JsonResponse
     {

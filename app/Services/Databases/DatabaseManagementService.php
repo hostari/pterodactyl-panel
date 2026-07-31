@@ -2,8 +2,6 @@
 
 namespace Pterodactyl\Services\Databases;
 
-use Exception;
-use InvalidArgumentException;
 use Pterodactyl\Models\Server;
 use Pterodactyl\Models\Database;
 use Pterodactyl\Helpers\Utilities;
@@ -37,7 +35,7 @@ class DatabaseManagementService
         protected ConnectionInterface $connection,
         protected DynamicDatabaseConnection $dynamic,
         protected Encrypter $encrypter,
-        protected DatabaseRepository $repository
+        protected DatabaseRepository $repository,
     ) {
     }
 
@@ -67,8 +65,8 @@ class DatabaseManagementService
      * Create a new database that is linked to a specific host.
      *
      * @throws \Throwable
-     * @throws \Pterodactyl\Exceptions\Service\Database\TooManyDatabasesException
-     * @throws \Pterodactyl\Exceptions\Service\Database\DatabaseClientFeatureNotEnabledException
+     * @throws TooManyDatabasesException
+     * @throws DatabaseClientFeatureNotEnabledException
      */
     public function create(Server $server, array $data): Database
     {
@@ -86,7 +84,7 @@ class DatabaseManagementService
 
         // Protect against developer mistakes...
         if (empty($data['database']) || !preg_match(self::MATCH_NAME_REGEX, $data['database'])) {
-            throw new InvalidArgumentException('The database name passed to DatabaseManagementService::handle MUST be prefixed with "s{server_id}_".');
+            throw new \InvalidArgumentException('The database name passed to DatabaseManagementService::handle MUST be prefixed with "s{server_id}_".');
         }
 
         $data = array_merge($data, [
@@ -117,14 +115,18 @@ class DatabaseManagementService
 
                 return $database;
             });
-        } catch (Exception $exception) {
+        } catch (\Exception $exception) {
             try {
+                // This is actually incorrect, it can be null in the case that the $database model
+                // itself isn't able to be created in Pterodactyl's database.
+                //
+                // @phpstan-ignore-next-line instanceof.alwaysFalse
                 if ($database instanceof Database) {
                     $this->repository->dropDatabase($database->database);
                     $this->repository->dropUser($database->username, $database->remote);
                     $this->repository->flush();
                 }
-            } catch (Exception $deletionException) {
+            } catch (\Throwable $deletionException) { // @phpstan-ignore catch.neverThrown
                 // Do nothing here. We've already encountered an issue before this point so no
                 // reason to prioritize this error over the initial one.
             }
@@ -154,7 +156,7 @@ class DatabaseManagementService
      * have the same name across multiple hosts, for the sake of keeping this logic easy to understand
      * and avoiding user confusion we will ignore the specific host and just look across all hosts.
      *
-     * @throws \Pterodactyl\Exceptions\Repository\DuplicateDatabaseNameException
+     * @throws DuplicateDatabaseNameException
      * @throws \Throwable
      */
     protected function createModel(array $data): Database

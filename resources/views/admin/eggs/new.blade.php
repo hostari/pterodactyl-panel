@@ -64,13 +64,21 @@
                         <div class="col-sm-6">
                             <div class="form-group">
                                 <label for="pDockerImage" class="control-label">Docker Images</label>
-                                <textarea id="pDockerImages" name="docker_images" rows="4" placeholder="quay.io/pterodactyl/service" class="form-control">{{ old('docker_images') }}</textarea>
+                                <textarea id="pDockerImages" name="docker_images" rows="4" placeholder="ghcr.io/pterodactyl/yolks" class="form-control">{{ old('docker_images') }}</textarea>
                                 <p class="text-muted small">The docker images available to servers using this egg. Enter one per line. Users will be able to select from this list of images if more than one value is provided.</p>
                             </div>
                             <div class="form-group">
                                 <label for="pStartup" class="control-label">Startup Command</label>
                                 <textarea id="pStartup" name="startup" class="form-control" rows="10">{{ old('startup') }}</textarea>
                                 <p class="text-muted small">The default startup command that should be used for new servers created with this Egg. You can change this per-server as needed.</p>
+                            </div>
+                            <div class="form-group">
+                                <label for="pConfigFeatures" class="control-label">Features</label>
+                                <div>
+                                    <select class="form-control" name="features[]" id="pConfigFeatures" multiple>
+                                    </select>
+                                    <p class="text-muted small">Additional features belonging to the egg. Useful for configuring additional panel modifications.</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -160,6 +168,11 @@
 
             $(this).val(prepend + '    ' + append);
         }
+    });
+    $('#pConfigFeatures').select2({
+        tags: true,
+        selectOnClose: false,
+        tokenSeparators: [',', ' '],
     });
     </script>
 @endsection

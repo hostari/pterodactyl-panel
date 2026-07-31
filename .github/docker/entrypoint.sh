@@ -1,9 +1,16 @@
 #!/bin/ash -e
 cd /app
 
-mkdir -p /var/log/panel/logs/ /var/log/supervisord/ /var/log/nginx/ /var/log/php7/ \
-  && chmod 777 /var/log/panel/logs/ \
-  && ln -s /var/log/panel/logs/ /app/storage/logs/
+mkdir -p /app/storage/logs/ /var/log/panel/ /var/log/supervisord/ /var/log/nginx/ /var/log/php7/
+
+# Keep the legacy panel log path wired to the persistent storage/logs mount. If
+# an older container left a real directory here, preserve its contents first.
+if [ -e /var/log/panel/logs ] && [ ! -L /var/log/panel/logs ]; then
+  cp -a /var/log/panel/logs/. /app/storage/logs/
+  rm -rf /var/log/panel/logs
+fi
+ln -sfn /app/storage/logs /var/log/panel/logs
+chmod 777 /app/storage/logs/
 
 ## check for .env file and generate app keys if missing
 if [ -f /app/var/.env ]; then
@@ -24,6 +31,17 @@ else
   else
     echo -e "APP_KEY exists in environment, using that."
     echo -e "APP_KEY=$APP_KEY" > /app/var/.env
+  fi
+
+  ## generate a random salt for hashids if not provided
+  if [ -z $HASHIDS_SALT ]; then
+     echo -e "Generating hashids salt."
+     HASHIDS_SALT=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9!@#$%^&*()_+?><~' | fold -w 20 | head -n 1)
+     echo -e "Generated hashids salt: $HASHIDS_SALT"
+     echo -e "HASHIDS_SALT=$HASHIDS_SALT" >> /app/var/.env
+  else
+    echo -e "HASHIDS_SALT exists in environment, using that."
+    echo -e "HASHIDS_SALT=$HASHIDS_SALT" >> /app/var/.env
   fi
 
   ln -s /app/var/.env /app/
@@ -58,6 +76,13 @@ fi
 if [[ -z $DB_PORT ]]; then
   echo -e "DB_PORT not specified, defaulting to 3306"
   DB_PORT=3306
+fi
+
+## check log folder permissions
+echo "Checking log folder permissions."
+if [ "$(stat -c %U:%G /app/storage/logs)" != "nginx" ]; then
+  echo "Fixing log folder permissions."
+  chown -R nginx: /app/storage/logs/
 fi
 
 ## check for DB up before starting the panel

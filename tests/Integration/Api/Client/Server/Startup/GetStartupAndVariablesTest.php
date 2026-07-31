@@ -12,9 +12,8 @@ class GetStartupAndVariablesTest extends ClientApiIntegrationTestCase
     /**
      * Test that the startup command and variables are returned for a server, but only the variables
      * that can be viewed by a user (e.g. user_viewable=true).
-     *
-     * @dataProvider permissionsDataProvider
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('permissionsDataProvider')]
     public function testStartupVariablesAreReturnedForServer(array $permissions)
     {
         /** @var \Pterodactyl\Models\Server $server */
@@ -58,7 +57,7 @@ class GetStartupAndVariablesTest extends ClientApiIntegrationTestCase
         $this->actingAs($user2)->getJson($this->link($server) . '/startup')->assertNotFound();
     }
 
-    public function permissionsDataProvider(): array
+    public static function permissionsDataProvider(): array
     {
         return [[[]], [[Permission::ACTION_STARTUP_READ]]];
     }

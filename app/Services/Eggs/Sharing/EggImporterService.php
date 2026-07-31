@@ -102,7 +102,7 @@ class EggImporterService
 
     private function import(array $parsed, int $nest, bool $importUpdateUrl): Egg
     {
-        /** @var \Pterodactyl\Models\Nest $nest */
+        /** @var Nest $nest */
         $nest = Nest::query()->with('eggs', 'eggs.variables')->findOrFail($nest);
 
         return $this->connection->transaction(

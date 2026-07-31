@@ -15,7 +15,7 @@ class AssignAllocationRequest extends ClientApiRequest
     public function rules(): array
     {
         return [
-            'allocation_id' => 'required|numeric',
+            'allocation_id' => ['required', 'integer', 'min:1'],
         ];
     }
 }

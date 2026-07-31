@@ -2,7 +2,6 @@
 
 namespace Pterodactyl\Tests\Integration\Api\Client\Server\Backup;
 
-use Mockery;
 use Carbon\CarbonImmutable;
 use Pterodactyl\Models\Backup;
 use Pterodactyl\Models\Subuser;
@@ -11,9 +10,7 @@ use Pterodactyl\Tests\Integration\Api\Client\ClientApiIntegrationTestCase;
 
 class BackupAuthorizationTest extends ClientApiIntegrationTestCase
 {
-    /**
-     * @dataProvider methodDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('methodDataProvider')]
     public function testAccessToAServersBackupIsRestrictedProperly(string $method, string $endpoint)
     {
         // The API $user is the owner of $server1.
@@ -31,7 +28,7 @@ class BackupAuthorizationTest extends ClientApiIntegrationTestCase
         $backup2 = Backup::factory()->create(['server_id' => $server2->id, 'completed_at' => CarbonImmutable::now()]);
         $backup3 = Backup::factory()->create(['server_id' => $server3->id, 'completed_at' => CarbonImmutable::now()]);
 
-        $this->instance(DeleteBackupService::class, $mock = Mockery::mock(DeleteBackupService::class));
+        $this->instance(DeleteBackupService::class, $mock = \Mockery::mock(DeleteBackupService::class));
 
         if ($method === 'DELETE') {
             $mock->expects('handle')->andReturnUndefined();
@@ -55,7 +52,7 @@ class BackupAuthorizationTest extends ClientApiIntegrationTestCase
         $this->actingAs($user)->json($method, $this->link($server3, '/backups/' . $backup3->uuid . $endpoint))->assertNotFound();
     }
 
-    public function methodDataProvider(): array
+    public static function methodDataProvider(): array
     {
         return [
             ['GET', ''],

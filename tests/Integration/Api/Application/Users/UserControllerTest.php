@@ -3,7 +3,10 @@
 namespace Pterodactyl\Tests\Integration\Api\Application\Users;
 
 use Pterodactyl\Models\User;
+use Pterodactyl\Models\ApiKey;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Notification;
+use Pterodactyl\Notifications\AccountCreated;
 use Pterodactyl\Services\Acl\Api\AdminAcl;
 use Pterodactyl\Transformers\Api\Application\UserTransformer;
 use Pterodactyl\Transformers\Api\Application\ServerTransformer;
@@ -206,6 +209,8 @@ class UserControllerTest extends ApplicationApiIntegrationTestCase
      */
     public function testCreateUser()
     {
+        Notification::fake();
+
         $response = $this->postJson('/api/application/users', [
             'username' => 'testuser',
             'email' => 'test@example.com',
@@ -218,19 +223,48 @@ class UserControllerTest extends ApplicationApiIntegrationTestCase
         $response->assertJsonStructure([
             'object',
             'attributes' => ['id', 'external_id', 'uuid', 'username', 'email', 'first_name', 'last_name', 'language', 'root_admin', '2fa', 'created_at', 'updated_at'],
-            'meta' => ['resource'],
+            'meta' => ['resource', 'token'],
         ]);
 
         $this->assertDatabaseHas('users', ['username' => 'testuser', 'email' => 'test@example.com']);
 
         $user = User::where('username', 'testuser')->first();
+        $token = $response->json('meta.token');
+        $apiKey = ApiKey::query()
+            ->where('user_id', $user->id)
+            ->where('key_type', ApiKey::TYPE_ACCOUNT)
+            ->firstOrFail();
+
+        $this->assertIsString($token);
+        $this->assertStringStartsWith($apiKey->identifier, $token);
+        $this->assertSame(decrypt($apiKey->token), substr($token, strlen($apiKey->identifier)));
         $response->assertJson([
             'object' => 'user',
             'attributes' => $this->getTransformer(UserTransformer::class)->transform($user),
             'meta' => [
                 'resource' => route('api.application.users.view', $user->id),
+                'token' => $token,
             ],
         ], true);
+
+        Notification::assertNotSentTo($user, AccountCreated::class);
+
+        $this->assertActivityFor('user:user.create', $this->getApiUser(), $user);
+    }
+
+    public function testPasswordSetupEmailIsSentForHostariAddressCaseInsensitively()
+    {
+        Notification::fake();
+
+        $response = $this->postJson('/api/application/users', [
+            'username' => 'hostari-user',
+            'email' => 'Person@HOSTARI.COM',
+            'first_name' => 'Hostari',
+            'last_name' => 'User',
+        ])->assertCreated();
+
+        $user = User::query()->findOrFail($response->json('attributes.id'));
+        Notification::assertSentTo($user, AccountCreated::class);
     }
 
     /**
@@ -279,9 +313,8 @@ class UserControllerTest extends ApplicationApiIntegrationTestCase
     /**
      * Test that an API key without write permissions cannot create, update, or
      * delete a user model.
-     *
-     * @dataProvider userWriteEndpointsDataProvider
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('userWriteEndpointsDataProvider')]
     public function testApiKeyWithoutWritePermissions(string $method, string $url)
     {
         $this->createNewDefaultApiKey($this->getApiUser(), ['r_users' => AdminAcl::READ]);
@@ -299,7 +332,7 @@ class UserControllerTest extends ApplicationApiIntegrationTestCase
      * Endpoints that should return a 403 error when the key does not have write
      * permissions for user management.
      */
-    public function userWriteEndpointsDataProvider(): array
+    public static function userWriteEndpointsDataProvider(): array
     {
         return [
             ['postJson', '/api/application/users'],

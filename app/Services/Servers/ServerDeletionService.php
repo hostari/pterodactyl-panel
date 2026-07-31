@@ -2,7 +2,6 @@
 
 namespace Pterodactyl\Services\Servers;
 
-use Exception;
 use Illuminate\Http\Response;
 use Pterodactyl\Models\Server;
 use Illuminate\Support\Facades\Log;
@@ -21,7 +20,7 @@ class ServerDeletionService
     public function __construct(
         private ConnectionInterface $connection,
         private DaemonServerRepository $daemonServerRepository,
-        private DatabaseManagementService $databaseManagementService
+        private DatabaseManagementService $databaseManagementService,
     ) {
     }
 
@@ -36,7 +35,7 @@ class ServerDeletionService
     }
 
     /**
-     * Delete a server from the panel and remove any associated databases from hosts.
+     * Delete a server from the panel, clear any allocation notes, and remove any associated databases from hosts.
      *
      * @throws \Throwable
      * @throws \Pterodactyl\Exceptions\DisplayException
@@ -61,7 +60,7 @@ class ServerDeletionService
             foreach ($server->databases as $database) {
                 try {
                     $this->databaseManagementService->delete($database);
-                } catch (Exception $exception) {
+                } catch (\Exception $exception) {
                     if (!$this->force) {
                         throw $exception;
                     }
@@ -77,6 +76,10 @@ class ServerDeletionService
                     Log::warning($exception);
                 }
             }
+
+            // clear any allocation notes for the server
+            $server->allocations()->update(['notes' => null]);
+
 
             $server->delete();
         });

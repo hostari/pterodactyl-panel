@@ -34,10 +34,10 @@ class StartupModificationServiceTest extends IntegrationTestCase
             ]);
 
             $this->fail('This assertion should not be called.');
-        } catch (Exception $exception) {
+        } catch (\Exception $exception) {
             $this->assertInstanceOf(ValidationException::class, $exception);
 
-            /** @var \Illuminate\Validation\ValidationException $exception */
+            /** @var ValidationException $exception */
             $errors = $exception->validator->errors()->toArray();
 
             $this->assertCount(1, $errors);
