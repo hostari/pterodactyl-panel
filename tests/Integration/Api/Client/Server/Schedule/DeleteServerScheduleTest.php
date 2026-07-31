@@ -12,9 +12,8 @@ class DeleteServerScheduleTest extends ClientApiIntegrationTestCase
 {
     /**
      * Test that a schedule can be deleted from the system.
-     *
-     * @dataProvider permissionsDataProvider
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('permissionsDataProvider')]
     public function testScheduleCanBeDeleted(array $permissions)
     {
         [$user, $server] = $this->generateTestAccount($permissions);
@@ -77,7 +76,7 @@ class DeleteServerScheduleTest extends ClientApiIntegrationTestCase
         $this->assertDatabaseHas('schedules', ['id' => $schedule->id]);
     }
 
-    public function permissionsDataProvider(): array
+    public static function permissionsDataProvider(): array
     {
         return [[[]], [[Permission::ACTION_SCHEDULE_DELETE]]];
     }

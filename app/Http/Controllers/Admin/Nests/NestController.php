@@ -24,7 +24,7 @@ class NestController extends Controller
         protected NestDeletionService $nestDeletionService,
         protected NestRepositoryInterface $repository,
         protected NestUpdateService $nestUpdateService,
-        protected ViewFactory $view
+        protected ViewFactory $view,
     ) {
     }
 
@@ -35,7 +35,7 @@ class NestController extends Controller
      */
     public function index(): View
     {
-        return $this->view->make('admin.nests.index', [
+        return view('admin.nests.index', [
             'nests' => $this->repository->getWithCounts(),
         ]);
     }
@@ -45,7 +45,7 @@ class NestController extends Controller
      */
     public function create(): View
     {
-        return $this->view->make('admin.nests.new');
+        return view('admin.nests.new');
     }
 
     /**
@@ -56,7 +56,7 @@ class NestController extends Controller
     public function store(StoreNestFormRequest $request): RedirectResponse
     {
         $nest = $this->nestCreationService->handle($request->normalize());
-        $this->alert->success(trans('admin/nests.notices.created', ['name' => $nest->name]))->flash();
+        $this->alert->success(trans('admin/nests.notices.created', ['name' => htmlspecialchars($nest->name)]))->flash();
 
         return redirect()->route('admin.nests.view', $nest->id);
     }
@@ -68,7 +68,7 @@ class NestController extends Controller
      */
     public function view(int $nest): View
     {
-        return $this->view->make('admin.nests.view', [
+        return view('admin.nests.view', [
             'nest' => $this->repository->getWithEggServers($nest),
         ]);
     }

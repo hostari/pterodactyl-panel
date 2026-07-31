@@ -2,7 +2,6 @@
 
 namespace Pterodactyl\Services\Allocations;
 
-use Exception;
 use IPTools\Network;
 use Pterodactyl\Models\Node;
 use Illuminate\Database\ConnectionInterface;
@@ -15,7 +14,7 @@ use Pterodactyl\Exceptions\Service\Allocation\TooManyPortsInRangeException;
 
 class AssignmentService
 {
-    public const CIDR_MAX_BITS = 27;
+    public const CIDR_MAX_BITS = 25;
     public const CIDR_MIN_BITS = 32;
     public const PORT_FLOOR = 1024;
     public const PORT_CEIL = 65535;
@@ -32,11 +31,11 @@ class AssignmentService
     /**
      * Insert allocations into the database and link them to a specific node.
      *
-     * @throws \Pterodactyl\Exceptions\DisplayException
-     * @throws \Pterodactyl\Exceptions\Service\Allocation\CidrOutOfRangeException
-     * @throws \Pterodactyl\Exceptions\Service\Allocation\InvalidPortMappingException
-     * @throws \Pterodactyl\Exceptions\Service\Allocation\PortOutOfRangeException
-     * @throws \Pterodactyl\Exceptions\Service\Allocation\TooManyPortsInRangeException
+     * @throws DisplayException
+     * @throws CidrOutOfRangeException
+     * @throws InvalidPortMappingException
+     * @throws PortOutOfRangeException
+     * @throws TooManyPortsInRangeException
      */
     public function handle(Node $node, array $data): void
     {
@@ -54,8 +53,8 @@ class AssignmentService
             // IP to use, not multiple.
             $underlying = gethostbyname($data['allocation_ip']);
             $parsed = Network::parse($underlying);
-        } catch (Exception $exception) {
-            /* @noinspection PhpUndefinedVariableInspection */
+        } catch (\Exception $exception) {
+            // @phpstan-ignore-next-line variable.undefined
             throw new DisplayException("Could not parse provided allocation IP address ({$underlying}): {$exception->getMessage()}", $exception);
         }
 

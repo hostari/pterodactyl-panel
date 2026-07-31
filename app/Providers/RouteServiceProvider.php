@@ -4,6 +4,7 @@ namespace Pterodactyl\Providers;
 
 use Illuminate\Http\Request;
 use Pterodactyl\Models\Database;
+use Pterodactyl\Enum\ResourceLimit;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\RateLimiter;
@@ -19,7 +20,7 @@ class RouteServiceProvider extends ServiceProvider
     /**
      * Define your route model bindings, pattern filters, etc.
      */
-    public function boot()
+    public function boot(): void
     {
         $this->configureRateLimiting();
 
@@ -68,7 +69,7 @@ class RouteServiceProvider extends ServiceProvider
     /**
      * Configure the rate limiters for the application.
      */
-    protected function configureRateLimiting()
+    protected function configureRateLimiting(): void
     {
         // Authentication rate limiting. For login and checkpoint endpoints we'll apply
         // a limit of 10 requests per minute, for the forgot password endpoint apply a
@@ -106,5 +107,7 @@ class RouteServiceProvider extends ServiceProvider
                 config('http.rate_limit.application')
             )->by($key);
         });
+
+        ResourceLimit::boot();
     }
 }

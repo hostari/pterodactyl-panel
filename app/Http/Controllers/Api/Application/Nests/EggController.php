@@ -19,7 +19,7 @@ class EggController extends ApplicationApiController
 {
     public function __construct(
         private EggImporterService $importerService,
-        private EggUpdateImporterService $updateImporterService
+        private EggUpdateImporterService $updateImporterService,
     ) {
         parent::__construct();
     }

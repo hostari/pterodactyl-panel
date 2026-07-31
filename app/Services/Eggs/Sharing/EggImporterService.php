@@ -59,7 +59,7 @@ class EggImporterService
         array $document,
         int $nest,
         string $syncKey,
-        string $syncHash
+        string $syncHash,
     ): array {
         $parsed = $this->parser->parse($document);
         $nest = Nest::query()->findOrFail($nest);
@@ -102,7 +102,7 @@ class EggImporterService
 
     private function import(array $parsed, int $nest, bool $importUpdateUrl): Egg
     {
-        /** @var \Pterodactyl\Models\Nest $nest */
+        /** @var Nest $nest */
         $nest = Nest::query()->with('eggs', 'eggs.variables')->findOrFail($nest);
 
         return $this->connection->transaction(
@@ -115,7 +115,7 @@ class EggImporterService
         Nest $nest,
         bool $importUpdateUrl,
         ?string $syncKey = null,
-        ?string $syncHash = null
+        ?string $syncHash = null,
     ): Egg {
         $egg = (new Egg())->forceFill([
             'uuid' => Uuid::uuid4()->toString(),

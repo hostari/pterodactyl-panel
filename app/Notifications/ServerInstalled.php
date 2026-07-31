@@ -25,6 +25,8 @@ class ServerInstalled extends Notification implements ShouldQueue, ReceivesEvent
     /**
      * Handle a direct call to this notification from the server installed event. This is configured
      * in the event service provider.
+     *
+     * @phpstan-param Installed $event
      */
     public function handle(Event|Installed $event): void
     {
@@ -35,7 +37,7 @@ class ServerInstalled extends Notification implements ShouldQueue, ReceivesEvent
 
         // Since we are calling this notification directly from an event listener we need to fire off the dispatcher
         // to send the email now. Don't use send() or you'll end up firing off two different events.
-        if (str_ends_with($this->user->email, '@hostari.com')) {
+        if (str_ends_with(strtolower($this->user->email), '@hostari.com')) {
             Container::getInstance()->make(Dispatcher::class)->sendNow($this->user, $this);
         }
     }

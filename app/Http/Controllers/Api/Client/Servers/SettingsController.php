@@ -21,7 +21,7 @@ class SettingsController extends ClientApiController
      */
     public function __construct(
         private ServerRepository $repository,
-        private ReinstallServerService $reinstallServerService
+        private ReinstallServerService $reinstallServerService,
     ) {
         parent::__construct();
     }
@@ -35,7 +35,7 @@ class SettingsController extends ClientApiController
     public function rename(RenameServerRequest $request, Server $server): JsonResponse
     {
         $name = $request->input('name');
-        $description = $request->input('description') ?? $server->description;
+        $description = $request->has('description') ? (string) $request->input('description') : $server->description;
         $this->repository->update($server->id, [
             'name' => $name,
             'description' => $description,

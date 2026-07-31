@@ -2,6 +2,7 @@
 
 namespace Pterodactyl\Tests\Integration\Api\Client\Server;
 
+use Pterodactyl\Models\Node;
 use Pterodactyl\Models\User;
 use Illuminate\Http\Response;
 use Pterodactyl\Models\Allocation;
@@ -10,6 +11,73 @@ use Pterodactyl\Tests\Integration\Api\Client\ClientApiIntegrationTestCase;
 
 class NetworkAllocationControllerTest extends ClientApiIntegrationTestCase
 {
+    public function testSpecificFreeAllocationCanBeAssigned()
+    {
+        [$user, $server] = $this->generateTestAccount();
+        $server->forceFill(['allocation_limit' => 2])->save();
+        $allocation = Allocation::factory()->create(['node_id' => $server->node_id, 'server_id' => null]);
+
+        $this->actingAs($user)->postJson($this->link($server, '/network/allocations/assign'), [
+            'allocation_id' => $allocation->id,
+        ])->assertOk()->assertJsonPath('attributes.id', $allocation->id);
+
+        $this->assertSame($server->id, $allocation->refresh()->server_id);
+        $this->assertActivityFor('server:allocation.create', $user, $allocation);
+    }
+
+    public function testMissingSpecificAllocationFailsWithoutChangingAssignments()
+    {
+        [$user, $server] = $this->generateTestAccount();
+        $server->forceFill(['allocation_limit' => 2])->save();
+
+        $this->actingAs($user)->postJson($this->link($server, '/network/allocations/assign'), [
+            'allocation_id' => 2147483647,
+        ])->assertBadRequest();
+
+        $this->assertCount(1, $server->allocations()->get());
+    }
+
+    public function testOccupiedSpecificAllocationCannotBeStolen()
+    {
+        [$user, $server] = $this->generateTestAccount();
+        [, $otherServer] = $this->generateTestAccount();
+        $server->forceFill(['allocation_limit' => 2])->save();
+        $allocation = Allocation::factory()->create(['node_id' => $server->node_id, 'server_id' => $otherServer->id]);
+
+        $this->actingAs($user)->postJson($this->link($server, '/network/allocations/assign'), [
+            'allocation_id' => $allocation->id,
+        ])->assertBadRequest();
+
+        $this->assertSame($otherServer->id, $allocation->refresh()->server_id);
+    }
+
+    public function testCrossNodeSpecificAllocationCannotBeAssigned()
+    {
+        [$user, $server] = $this->generateTestAccount();
+        $server->forceFill(['allocation_limit' => 2])->save();
+        $node = Node::factory()->create(['location_id' => $server->node->location_id]);
+        $allocation = Allocation::factory()->create(['node_id' => $node->id, 'server_id' => null]);
+
+        $this->actingAs($user)->postJson($this->link($server, '/network/allocations/assign'), [
+            'allocation_id' => $allocation->id,
+        ])->assertBadRequest();
+
+        $this->assertNull($allocation->refresh()->server_id);
+    }
+
+    public function testSpecificAllocationCannotExceedServerLimit()
+    {
+        [$user, $server] = $this->generateTestAccount();
+        $server->forceFill(['allocation_limit' => 1])->save();
+        $allocation = Allocation::factory()->create(['node_id' => $server->node_id, 'server_id' => null]);
+
+        $this->actingAs($user)->postJson($this->link($server, '/network/allocations/assign'), [
+            'allocation_id' => $allocation->id,
+        ])->assertBadRequest();
+
+        $this->assertNull($allocation->refresh()->server_id);
+    }
+
     /**
      * Test that a servers allocations are returned in the expected format.
      */
@@ -48,9 +116,8 @@ class NetworkAllocationControllerTest extends ClientApiIntegrationTestCase
 
     /**
      * Tests that notes on an allocation can be set correctly.
-     *
-     * @dataProvider updatePermissionsDataProvider
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('updatePermissionsDataProvider')]
     public function testAllocationNotesCanBeUpdated(array $permissions)
     {
         [$user, $server] = $this->generateTestAccount($permissions);
@@ -96,9 +163,7 @@ class NetworkAllocationControllerTest extends ClientApiIntegrationTestCase
         $this->actingAs($user)->postJson($this->link($server->allocation))->assertForbidden();
     }
 
-    /**
-     * @dataProvider updatePermissionsDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('updatePermissionsDataProvider')]
     public function testPrimaryAllocationCanBeModified(array $permissions)
     {
         [$user, $server] = $this->generateTestAccount($permissions);
@@ -133,7 +198,7 @@ class NetworkAllocationControllerTest extends ClientApiIntegrationTestCase
             ->assertForbidden();
     }
 
-    public function updatePermissionsDataProvider(): array
+    public static function updatePermissionsDataProvider(): array
     {
         return [[[]], [[Permission::ACTION_ALLOCATION_UPDATE]]];
     }

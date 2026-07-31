@@ -2,13 +2,10 @@
 
 namespace Pterodactyl\Jobs\Schedule;
 
-use Exception;
-use Pterodactyl\Jobs\Job;
 use Carbon\CarbonImmutable;
 use Pterodactyl\Models\Task;
-use InvalidArgumentException;
+use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Pterodactyl\Services\Backups\InitiateBackupService;
@@ -16,10 +13,10 @@ use Pterodactyl\Repositories\Wings\DaemonPowerRepository;
 use Pterodactyl\Repositories\Wings\DaemonCommandRepository;
 use Pterodactyl\Exceptions\Http\Connection\DaemonConnectionException;
 
-class RunTaskJob extends Job implements ShouldQueue
+class RunTaskJob implements ShouldQueue
 {
+    use Queueable;
     use DispatchesJobs;
-    use InteractsWithQueue;
     use SerializesModels;
 
     /**
@@ -38,7 +35,7 @@ class RunTaskJob extends Job implements ShouldQueue
     public function handle(
         DaemonCommandRepository $commandRepository,
         InitiateBackupService $backupService,
-        DaemonPowerRepository $powerRepository
+        DaemonPowerRepository $powerRepository,
     ) {
         // Do not process a task that is not set to active, unless it's been manually triggered.
         if (!$this->task->schedule->is_active && !$this->manualRun) {
@@ -72,9 +69,9 @@ class RunTaskJob extends Job implements ShouldQueue
                     $backupService->setIgnoredFiles(explode(PHP_EOL, $this->task->payload))->handle($server, null, true);
                     break;
                 default:
-                    throw new InvalidArgumentException('Invalid task action provided: ' . $this->task->action);
+                    throw new \InvalidArgumentException('Invalid task action provided: ' . $this->task->action);
             }
-        } catch (Exception $exception) {
+        } catch (\Exception $exception) {
             // If this isn't a DaemonConnectionException on a task that allows for failures
             // throw the exception back up the chain so that the task is stopped.
             if (!($this->task->continue_on_failure && $exception instanceof DaemonConnectionException)) {
@@ -89,7 +86,7 @@ class RunTaskJob extends Job implements ShouldQueue
     /**
      * Handle a failure while sending the action to the daemon or otherwise processing the job.
      */
-    public function failed(Exception $exception = null)
+    public function failed(?\Exception $exception = null)
     {
         $this->markTaskNotQueued();
         $this->markScheduleComplete();
@@ -100,7 +97,7 @@ class RunTaskJob extends Job implements ShouldQueue
      */
     private function queueNextTask()
     {
-        /** @var \Pterodactyl\Models\Task|null $nextTask */
+        /** @var Task|null $nextTask */
         $nextTask = Task::query()->where('schedule_id', $this->task->schedule_id)
             ->orderBy('sequence_id', 'asc')
             ->where('sequence_id', '>', $this->task->sequence_id)

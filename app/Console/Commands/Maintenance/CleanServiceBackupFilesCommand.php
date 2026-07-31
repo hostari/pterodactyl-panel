@@ -2,7 +2,6 @@
 
 namespace Pterodactyl\Console\Commands\Maintenance;
 
-use SplFileInfo;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Filesystem\Filesystem;
@@ -35,9 +34,9 @@ class CleanServiceBackupFilesCommand extends Command
     {
         $files = $this->disk->files('services/.bak');
 
-        collect($files)->each(function (SplFileInfo $file) {
+        collect($files)->each(function (\SplFileInfo $file) {
             $lastModified = Carbon::createFromTimestamp($this->disk->lastModified($file->getPath()));
-            if ($lastModified->diffInMinutes(Carbon::now()) > self::BACKUP_THRESHOLD_MINUTES) {
+            if ((int) $lastModified->diffInMinutes(Carbon::now()) > self::BACKUP_THRESHOLD_MINUTES) {
                 $this->disk->delete($file->getPath());
                 $this->info(trans('command/messages.maintenance.deleting_service_backup', ['file' => $file->getFilename()]));
             }

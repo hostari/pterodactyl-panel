@@ -2,9 +2,7 @@
 
 namespace Pterodactyl\Http\Controllers\Api\Remote;
 
-use Exception;
 use Carbon\Carbon;
-use DateTimeInterface;
 use Illuminate\Support\Str;
 use Pterodactyl\Models\User;
 use Webmozart\Assert\Assert;
@@ -29,7 +27,7 @@ class ActivityProcessingController extends Controller
 
         $logs = [];
         foreach ($request->input('data') as $datum) {
-            /** @var \Pterodactyl\Models\Server|null $server */
+            /** @var Server|null $server */
             $server = $servers->get($datum['server']);
             if (is_null($server) || !Str::startsWith($datum['event'], 'server:')) {
                 continue;
@@ -37,11 +35,11 @@ class ActivityProcessingController extends Controller
 
             try {
                 $when = Carbon::createFromFormat(
-                    DateTimeInterface::RFC3339,
+                    \DateTimeInterface::RFC3339,
                     preg_replace('/(\.\d+)Z$/', 'Z', $datum['timestamp']),
                     'UTC'
                 );
-            } catch (Exception $exception) {
+            } catch (\Exception $exception) {
                 Log::warning($exception, ['timestamp' => $datum['timestamp']]);
 
                 // If we cannot parse the value for some reason don't blow up this request, just go ahead

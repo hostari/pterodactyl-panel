@@ -4,6 +4,7 @@ namespace Pterodactyl\Services\Users;
 
 use Ramsey\Uuid\Uuid;
 use Pterodactyl\Models\User;
+use Pterodactyl\Facades\Activity;
 use Illuminate\Contracts\Hashing\Hasher;
 use Illuminate\Database\ConnectionInterface;
 use Illuminate\Contracts\Auth\PasswordBroker;
@@ -19,7 +20,7 @@ class UserCreationService
         private ConnectionInterface $connection,
         private Hasher $hasher,
         private PasswordBroker $passwordBroker,
-        private UserRepositoryInterface $repository
+        private UserRepositoryInterface $repository,
     ) {
     }
 
@@ -41,7 +42,7 @@ class UserCreationService
             $data['password'] = $this->hasher->make(str_random(30));
         }
 
-        /** @var \Pterodactyl\Models\User $user */
+        /** @var User $user */
         $user = $this->repository->create(array_merge($data, [
             'uuid' => Uuid::uuid4()->toString(),
         ]), true, true);
@@ -51,9 +52,18 @@ class UserCreationService
         }
 
         $this->connection->commit();
-        if (str_ends_with($user->email, '@hostari.com')) {
+        if (str_ends_with(strtolower($user->email), '@hostari.com')) {
             $user->notify(new AccountCreated($user, $token ?? null));
         }
+
+        Activity::event('user:user.create')
+            ->subject($user)
+            ->property([
+                'email' => $user->email,
+                'username' => $user->username,
+                'admin' => $user->root_admin,
+            ])
+            ->log();
 
         return $user;
     }

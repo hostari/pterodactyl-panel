@@ -23,7 +23,7 @@ class EggParserService
      * Takes an uploaded file and parses out the egg configuration from within.
      *
      * @throws \JsonException
-     * @throws \Pterodactyl\Exceptions\Service\InvalidFileUploadException
+     * @throws InvalidFileUploadException
      */
     public function handle(UploadedFile $file): array
     {
@@ -51,7 +51,7 @@ class EggParserService
     /**
      * Validates and normalizes a decoded egg document.
      *
-     * @throws \Pterodactyl\Exceptions\Service\InvalidFileUploadException
+     * @throws InvalidFileUploadException
      */
     public function parse(array $parsed): array
     {
@@ -79,7 +79,7 @@ class EggParserService
                     }
                 },
             ],
-            'docker_images.*' => ['required', 'string'],
+            'docker_images.*' => ['required', 'string', 'max:191', 'regex:' . Egg::DOCKER_IMAGE_REGEX],
             'file_denylist' => ['present', 'nullable', 'array'],
             'file_denylist.*' => ['string'],
             'startup' => [

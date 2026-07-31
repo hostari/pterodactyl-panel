@@ -2,7 +2,6 @@
 
 namespace Pterodactyl\Tests\Integration\Api\Client\Server;
 
-use Mockery;
 use Illuminate\Http\Response;
 use Pterodactyl\Models\Server;
 use Pterodactyl\Models\Permission;
@@ -13,12 +12,11 @@ class SettingsControllerTest extends ClientApiIntegrationTestCase
 {
     /**
      * Test that the server's name can be changed.
-     *
-     * @dataProvider renamePermissionsDataProvider
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('renamePermissionsDataProvider')]
     public function testServerNameCanBeChanged(array $permissions)
     {
-        /** @var \Pterodactyl\Models\Server $server */
+        /** @var Server $server */
         [$user, $server] = $this->generateTestAccount($permissions);
         $originalName = $server->name;
         $originalDescription = $server->description;
@@ -69,20 +67,19 @@ class SettingsControllerTest extends ClientApiIntegrationTestCase
     /**
      * Test that a server can be reinstalled. Honestly this test doesn't do much of anything other
      * than make sure the endpoint works since.
-     *
-     * @dataProvider reinstallPermissionsDataProvider
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('reinstallPermissionsDataProvider')]
     public function testServerCanBeReinstalled(array $permissions)
     {
-        /** @var \Pterodactyl\Models\Server $server */
+        /** @var Server $server */
         [$user, $server] = $this->generateTestAccount($permissions);
         $this->assertTrue($server->isInstalled());
 
-        $service = Mockery::mock(DaemonServerRepository::class);
+        $service = \Mockery::mock(DaemonServerRepository::class);
         $this->app->instance(DaemonServerRepository::class, $service);
 
         $service->expects('setServer')
-            ->with(Mockery::on(function ($value) use ($server) {
+            ->with(\Mockery::on(function ($value) use ($server) {
                 return $value->uuid === $server->uuid;
             }))
             ->andReturnSelf()
@@ -113,12 +110,12 @@ class SettingsControllerTest extends ClientApiIntegrationTestCase
         $this->assertTrue($server->isInstalled());
     }
 
-    public function renamePermissionsDataProvider(): array
+    public static function renamePermissionsDataProvider(): array
     {
         return [[[]], [[Permission::ACTION_SETTINGS_RENAME]]];
     }
 
-    public function reinstallPermissionsDataProvider(): array
+    public static function reinstallPermissionsDataProvider(): array
     {
         return [[[]], [[Permission::ACTION_SETTINGS_REINSTALL]]];
     }
